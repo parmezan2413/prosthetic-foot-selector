@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Підбір протезної стопи</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeecea;
+    --text: #1a1a1a; --text2: #666; --text3: #999;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --info-bg: #e6f1fb; --info-border: #85b7eb; --info-text: #0c447c;
+    --green-bg: #eaf3de; --green-border: #97c459; --green-text: #27500a;
+    --red-bg: #fcebeb; --red-border: #f09595; --red-text: #501313;
+    --amber-bg: #faeeda; --amber-border: #ef9f27; --amber-text: #633806;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 24px 16px; }
+  .app { max-width: 820px; margin: 0 auto; }
+  .app-header { margin-bottom: 20px; }
+  .app-header h1 { font-size: 22px; font-weight: 500; }
+  .app-header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab { padding: 8px 18px; cursor: pointer; font-size: 14px; border-radius: var(--radius) var(--radius) 0 0; border: 1px solid transparent; color: var(--text2); background: none; }
+  .tab.active { border: 1px solid var(--border); border-bottom: 1px solid var(--bg); background: var(--bg); color: var(--text); font-weight: 500; }
+  .panel { display: none; } .panel.active { display: block; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+  select, input[type=text], input[type=number] { width: 100%; padding: 7px 10px; border: 0.5px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--bg); color: var(--text); }
+  select:focus, input:focus { outline: 2px solid var(--info-border); }
+  .btn { padding: 8px 16px; border: 0.5px solid var(--border2); border-radius: var(--radius); cursor: pointer; font-size: 13px; background: var(--bg); color: var(--text); }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
+  .sect-title { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 6px; }
+  .result-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 12px; }
+  .part-num { font-size: 18px; font-weight: 500; font-family: 'Courier New', monospace; }
+  .foot-name { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .err { background: var(--red-bg); border: 0.5px solid var(--red-border); border-radius: var(--radius); padding: 10px 12px; font-size: 13px; color: var(--red-text); margin-bottom: 12px; }
+  .info-box { background: var(--info-bg); border: 0.5px solid var(--info-border); border-radius: var(--radius); padding: 10px 12px; font-size: 13px; color: var(--info-text); margin-bottom: 12px; }
+  .warn-details { margin-top: 10px; }
+  .warn-details summary { font-size: 12px; cursor: pointer; color: var(--text2); }
+  .warn-details ul { margin-top: 8px; padding-left: 18px; font-size: 12px; line-height: 1.9; color: var(--text2); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 500; font-size: 12px; color: var(--text2); }
+  td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); vertical-align: top; }
+  .badge-ordered { background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap; display: inline-block; margin-top: 4px; }
+  .badge-pending { background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red-border); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap; display: inline-block; margin-top: 4px; }
+  .mono { font-family: 'Courier New', monospace; font-size: 12px; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 16px; padding: 2px 6px; }
+  .del-btn:hover { color: #e24b4a; }
+  .pill { background: var(--bg); border: 0.5px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 12px; display: inline-block; margin: 2px; }
+  h2 { font-size: 18px; font-weight: 500; margin-bottom: 12px; }
+  h3 { font-size: 15px; font-weight: 500; margin-bottom: 10px; }
+  @media (max-width: 500px) { .form-row { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <h1>Підбір протезної стопи</h1>
+    <p>AllPro PM · Taleo Vertical Shock · Taleo Low Profile · Taleo · BladeXT</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('select')">Підбір стопи</div>
+    <div class="tab" onclick="showTab('patients')">Пацієнти (<span id="pt-count">0</span>)</div>
+  </div>
+
+  <div class="panel active" id="panel-select">
+    <div class="card">
+      <h3>Дані пацієнта</h3>
+      <div class="form-row">
+        <div><label>Прізвище</label><input type="text" id="inp-last" placeholder="Рижой"></div>
+        <div><label>Ім'я</label><input type="text" id="inp-first" placeholder="Владислав"></div>
+      </div>
+      <div class="form-row">
+        <div><label>Тип ампутації</label>
+          <select id="inp-amp" onchange="toggleAmp()">
+            <option value="single">Однобічна</option>
+            <option value="bilateral">Двобічна (bilateral)</option>
+          </select>
+        </div>
+        <div><label>Вага (кг)</label><input type="number" id="inp-weight" min="44" max="166" placeholder="80"></div>
+      </div>
+
+      <div id="single-fields">
+        <div class="sect-title">Параметри стопи</div>
+        <div class="form-row">
+          <div><label>Тип стопи</label>
+            <select id="inp-type" onchange="onTypeChange('','inp-type','size-row-s','activity-row-s','adapter-row-s')">
+              <option value="allpro">AllPro PM (Fillauer)</option>
+              <option value="taleo-vs">Taleo Vertical Shock (1C51)</option>
+              <option value="taleo-lp">Taleo Low Profile (1C53)</option>
+              <option value="taleo">Taleo (1C50)</option>
+              <option value="bladeXT">BladeXT (Blatchford)</option>
+            </select>
+          </div>
+          <div id="size-row-s"><label>Розмір (cm)</label>
+            <select id="inp-size">
+              <option>22</option><option>23</option><option>24</option><option>25</option>
+              <option>26</option><option selected>27</option><option>28</option><option>29</option><option>30</option>
+            </select>
+          </div>
+          <div id="activity-row-s" style="display:none"><label>Активність</label>
+            <select id="inp-activity"><option value="jogger">Jogger</option><option value="runner">Runner</option></select>
+          </div>
+          <div><label>Сторона</label>
+            <select id="inp-side"><option value="R">Права (R)</option><option value="L">Ліва (L)</option></select>
+          </div>
+          <div id="adapter-row-s" style="display:none"><label>Адаптер</label>
+            <select id="inp-adapter"><option value="F">Female (F) 250mm</option><option value="M">Male (M) 230mm</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div id="bilateral-fields" style="display:none">
+        <div class="sect-title">Ліва нога</div>
+        <div class="form-row">
+          <div><label>Тип стопи</label>
+            <select id="inp-type-l" onchange="onTypeChange('l','inp-type-l','size-row-l','activity-row-l','adapter-row-l')">
+              <option value="allpro">AllPro PM (Fillauer)</option>
+              <option value="taleo-vs">Taleo Vertical Shock (1C51)</option>
+              <option value="taleo-lp">Taleo Low Profile (1C53)</option>
+              <option value="taleo">Taleo (1C50)</option>
+              <option value="bladeXT">BladeXT (Blatchford)</option>
+            </select>
+          </div>
+          <div id="size-row-l"><label>Розмір (cm)</label>
+            <select id="inp-size-l">
+              <option>22</option><option>23</option><option>24</option><option>25</option>
+              <option>26</option><option>27</option><option>28</option><option>29</option><option>30</option>
+            </select>
+          </div>
+          <div id="activity-row-l" style="display:none"><label>Активність</label>
+            <select id="inp-activity-l"><option value="jogger">Jogger</option><option value="runner">Runner</option></select>
+          </div>
+          <div id="adapter-row-l" style="display:none"><label>Адаптер</label>
+            <select id="inp-adapter-l"><option value="F">Female (F) 250mm</option><option value="M">Male (M) 230mm</option></select>
+          </div>
+        </div>
+        <div class="sect-title">Права нога</div>
+        <div class="form-row">
+          <div><label>Тип стопи</label>
+            <select id="inp-type-r" onchange="onTypeChange('r','inp-type-r','size-row-r','activity-row-r','adapter-row-r')">
+              <option value="allpro">AllPro PM (Fillauer)</option>
+              <option value="taleo-vs">Taleo Vertical Shock (1C51)</option>
+              <option value="taleo-lp">Taleo Low Profile (1C53)</option>
+              <option value="taleo">Taleo (1C50)</option>
+              <option value="bladeXT">BladeXT (Blatchford)</option>
+            </select>
+          </div>
+          <div id="size-row-r"><label>Розмір (cm)</label>
+            <select id="inp-size-r">
+              <option>22</option><option>23</option><option>24</option><option>25</option>
+              <option>26</option><option>27</option><option>28</option><option>29</option><option>30</option>
+            </select>
+          </div>
+          <div id="activity-row-r" style="display:none"><label>Активність</label>
+            <select id="inp-activity-r"><option value="jogger">Jogger</option><option value="runner">Runner</option></select>
+          </div>
+          <div id="adapter-row-r" style="display:none"><label>Адаптер</label>
+            <select id="inp-adapter-r"><option value="F">Female (F) 250mm</option><option value="M">Male (M) 230mm</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="calculate()">Підібрати парт-номер</button>
+        <button class="btn" onclick="document.getElementById('result-area').innerHTML=''">Очистити</button>
+      </div>
+    </div>
+    <div id="result-area"></div>
+  </div>
+
+  <div class="panel" id="panel-patients">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">База пацієнтів</h2>
+      <button class="btn" onclick="exportData()">Експорт JSON</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="pt-table-wrap" style="overflow-x:auto">
+        <div style="color:var(--text2);font-size:14px;text-align:center;padding:40px">Ще немає пацієнтів.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ALLPRO_TABLE=[
+  {wMin:45,wMax:54,sizes:{22:'A2',23:'A2',24:'A2',25:'B4',26:'B4'}},
+  {wMin:54,wMax:63,sizes:{22:'A3',23:'A3',24:'A3',25:'B4',26:'B4',27:'C6',28:'C6'}},
+  {wMin:64,wMax:72,sizes:{22:'B4',23:'B4',24:'B4',25:'B4',26:'B4',27:'C6',28:'C6',29:'D7',30:'D7'}},
+  {wMin:73,wMax:81,sizes:{22:'B4',23:'B4',24:'B4',25:'C5',26:'C5',27:'C6',28:'C6',29:'D7',30:'D7'}},
+  {wMin:82,wMax:90,sizes:{22:'C5',23:'C5',24:'C5',25:'C5',26:'C5',27:'D7',28:'D7',29:'D7',30:'D7'}},
+  {wMin:91,wMax:102,sizes:{22:'C5',23:'C5',24:'C5',25:'D6',26:'D6',27:'D7',28:'D7',29:'E8',30:'E8'}},
+  {wMin:102,wMax:113,sizes:{25:'D6',26:'D6',27:'E8',28:'E8',29:'E8',30:'E8'}},
+  {wMin:113,wMax:125,sizes:{25:'E7',26:'E7',27:'E8',28:'E8',29:'F9',30:'F9'}},
+  {wMin:125,wMax:136,sizes:{25:'E7',26:'E7',27:'F9',28:'F9',29:'F9',30:'F9'}},
+  {wMin:137,wMax:150,sizes:{25:'F9',26:'F9',27:'F9',28:'F9',29:'G10',30:'G10'}},
+];
+const TALEO_STIFF=[
+  {wMin:0,wMax:51,n:1},{wMin:52,wMax:58,n:2},{wMin:59,wMax:67,n:3},
+  {wMin:68,wMax:77,n:4},{wMin:78,wMax:88,n:5},{wMin:89,wMax:100,n:6},
+  {wMin:101,wMax:115,n:7},{wMin:116,wMax:130,n:8},{wMin:131,wMax:150,n:9},
+];
+const TALEO_AVAIL={22:[1,2,3,4,5,6],23:[1,2,3,4,5,6],24:[1,2,3,4,5,6],
+  25:[1,2,3,4,5,6,7],26:[1,2,3,4,5,6,7,8],
+  27:[2,3,4,5,6,7,8,9],28:[2,3,4,5,6,7,8,9],
+  29:[3,4,5,6,7,8,9],30:[3,4,5,6,7,8,9]};
+const BLADE_SPRING=[
+  [44,52,1,2],[53,59,2,3],[60,68,3,4],[69,77,4,5],
+  [78,88,5,6],[89,100,6,7],[101,116,7,8],[117,130,8,9],[131,147,9,9],[148,166,9,null]
+];
+
+function getBladeSpring(w,act){
+  const r=BLADE_SPRING.find(x=>w>=x[0]&&w<=x[1]);
+  if(!r)return null;
+  return act==='runner'?r[3]:r[2];
+}
+function getSpringKit(s){
+  if(s<=2)return'539083SS (soft)';
+  if(s<=5)return'539083MS (medium)';
+  return'539083FS (firm)';
+}
+
+let patients=[];
+try{patients=JSON.parse(localStorage.getItem('prosth_v2')||'[]')}catch(e){}
+function save(){try{localStorage.setItem('prosth_v2',JSON.stringify(patients))}catch(e){}}
+
+function toggleAmp(){
+  const bil=document.getElementById('inp-amp').value==='bilateral';
+  document.getElementById('bilateral-fields').style.display=bil?'':'none';
+  document.getElementById('single-fields').style.display=bil?'none':'';
+}
+
+function onTypeChange(suf,typeId,sizeRowId,actRowId,adapterRowId){
+  const t=document.getElementById(typeId).value;
+  const isBlade=t==='bladeXT';
+  document.getElementById(sizeRowId).style.display=isBlade?'none':'';
+  document.getElementById(actRowId).style.display=isBlade?'':'none';
+  document.getElementById(adapterRowId).style.display=isBlade?'':'none';
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));
+  document.querySelector('.tab[onclick="showTab(\''+t+'\')"]').classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='patients')renderTable();
+}
+
+function getAllpro(w,sz){
+  const row=ALLPRO_TABLE.find(r=>w>=r.wMin&&w<=r.wMax);
+  if(!row)return null;
+  const code=row.sizes[sz];
+  if(!code)return null;
+  return{pn:'137-PM-'+sz+'-'+code,name:'AllPro PM',fullName:'AllPro PM Prosthetic Foot (Fillauer)',
+    lcode:'L5980',warranty:'36 місяців від дати підгонки',
+    warnings:['Тільки для одного пацієнта (single patient use)',
+      'Мінімальний кліренс — 10 см (4 дюйми)',
+      'Макс. вага: 150 кг (330 lbs) / К3–К4',
+      'Підгонку виконує лише кваліфікований протезист',
+      'Огляд клініцистом кожні 6 місяців',
+      'Водостійкість до 1 м — після занурення промити прісною водою',
+      'Не розбирати самостійно',
+      'Зміна у роботі або шум — негайно звернутись до протезиста']};
+}
+
+function getTaleo(w,sz,type){
+  const row=TALEO_STIFF.find(r=>w>=r.wMin&&w<=r.wMax);
+  if(!row)return null;
+  const avail=TALEO_AVAIL[sz]||[];
+  if(!avail.includes(row.n))return null;
+  const prod=type==='taleo-vs'?'1C51':type==='taleo-lp'?'1C53':'1C50';
+  const pName=type==='taleo-vs'?'Taleo Vertical Shock (1C51)':type==='taleo-lp'?'Taleo Low Profile (1C53)':'Taleo (1C50)';
+  const shape=sz<=25?'S':'N';
+  const warns=['Рівень мобільності MG 3–4','Макс. вага 150 кг',
+    'Підгонку виконує кваліфікований протезист',
+    'Захист від прісної, солоної та хлорованої води',
+    'Не розбирати самостійно'];
+  if(type==='taleo-vs')warns.push('±10° поглинання торсії, вертикальна амортизація до 15 мм');
+  if(type==='taleo-lp')warns.push('Низька висота конструкції — 65 мм з нормальним футшелом');
+  return{pn:prod+'=R'+sz+'-'+row.n+'-P/4'+shape,name:pName,fullName:'Ottobock '+pName,
+    stiff:row.n,warranty:'Уточнити у Ottobock',warnings:warns};
+}
+
+function getBlade(w,act,ad){
+  if(w>166)return null;
+  const s=getBladeSpring(w,act);
+  if(!s)return null;
+  const kit=getSpringKit(s);
+  return{pn:'BXTAG '+s+' S '+ad,name:'BladeXT',fullName:'BladeXT (Blatchford)',
+    spring:s,springKit:kit,buildHeight:ad==='F'?'250 мм':'230 мм',
+    warranty:'Уточнити у Blatchford',
+    warnings:['Макс. вага: 166 кг (365 lbs)','Рівень активності 4 (K4)',
+      'Водостійка — після контакту з сіллю/хлором промити прісною водою',
+      'Щорічний візуальний огляд рекомендований',
+      'Підгонку виконує лише кваліфікований протезист',
+      'Набір пружин для заміни: '+kit]};
+}
+
+function getResult(type,w,sz,side,act,ad){
+  if(type==='allpro')return getAllpro(w,parseInt(sz));
+  if(type==='bladeXT')return getBlade(w,act,ad);
+  return getTaleo(w,parseInt(sz),type);
+}
+
+function renderCard(res,label){
+  if(!res)return'<div class="err">'+label+': немає підходящого парт-номера для цієї комбінації.</div>';
+  let extra='';
+  if(res.spring)extra='<div style="font-size:12px;color:var(--text2);margin-top:5px">Пружина: <b>'+res.spring+'</b> &nbsp;·&nbsp; Набір: <span class="mono">'+res.springKit+'</span> &nbsp;·&nbsp; Висота: '+res.buildHeight+'</div>';
+  if(res.stiff)extra='<div style="font-size:12px;color:var(--text2);margin-top:5px">Жорсткість (stiffness): <b>'+res.stiff+'</b></div>';
+  const w=res.warnings.map(x=>'<li>'+x+'</li>').join('');
+  return'<div class="result-card">'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">'+label+'</div>'+
+    '<div class="part-num">'+res.pn+'</div>'+
+    '<div class="foot-name">'+res.fullName+(res.lcode?' &nbsp;·&nbsp; L-код: '+res.lcode:'')+'</div>'+
+    extra+
+    '<div style="font-size:12px;color:var(--text2);margin-top:6px">Гарантія: '+res.warranty+'</div>'+
+    '<details class="warn-details"><summary>Застереження та попередження</summary>'+
+    '<ul>'+w+'</ul></details></div>';
+}
+
+function calculate(){
+  const last=document.getElementById('inp-last').value.trim();
+  const first=document.getElementById('inp-first').value.trim();
+  const amp=document.getElementById('inp-amp').value;
+  const weight=parseInt(document.getElementById('inp-weight').value);
+  if(!last||!first){document.getElementById('result-area').innerHTML='<div class="err">Введіть прізвище та ім\'я.</div>';return;}
+  if(!weight||weight<44||weight>166){document.getElementById('result-area').innerHTML='<div class="err">Введіть коректну вагу (44–166 кг).</div>';return;}
+  let html='';let feet=[];
+  if(amp==='bilateral'){
+    const tL=document.getElementById('inp-type-l').value,szL=document.getElementById('inp-size-l').value;
+    const aL=document.getElementById('inp-activity-l').value,adL=document.getElementById('inp-adapter-l').value;
+    const tR=document.getElementById('inp-type-r').value,szR=document.getElementById('inp-size-r').value;
+    const aR=document.getElementById('inp-activity-r').value,adR=document.getElementById('inp-adapter-r').value;
+    const resL=getResult(tL,weight,szL,'L',aL,adL);
+    const resR=getResult(tR,weight,szR,'R',aR,adR);
+    html+=renderCard(resL,'Ліва нога');
+    html+=renderCard(resR,'Права нога');
+    if(resL)feet.push({pn:resL.pn,name:resL.name,side:'L',ordered:false});
+    if(resR)feet.push({pn:resR.pn,name:resR.name,side:'R',ordered:false});
+  } else {
+    const t=document.getElementById('inp-type').value,sz=document.getElementById('inp-size').value;
+    const side=document.getElementById('inp-side').value,act=document.getElementById('inp-activity').value;
+    const ad=document.getElementById('inp-adapter').value;
+    const res=getResult(t,weight,sz,side,act,ad);
+    html+=renderCard(res,side==='R'?'Права нога':'Ліва нога');
+    if(res)feet.push({pn:res.pn,name:res.name,side,ordered:false});
+  }
+  if(feet.length>0){
+    const d=JSON.stringify({last,first,weight,amp,feet}).replace(/'/g,'&#39;');
+    html+='<button class="btn btn-primary" onclick=\'savePatient('+d+')\' style="margin-top:4px">Зберегти пацієнта ↗</button>';
+  }
+  document.getElementById('result-area').innerHTML=html;
+}
+
+function savePatient(data){
+  const idx=patients.findIndex(p=>p.last===data.last&&p.first===data.first);
+  if(idx>=0){
+    data.feet.forEach(nf=>{
+      const fi=patients[idx].feet.findIndex(f=>f.side===nf.side);
+      if(fi>=0)patients[idx].feet[fi]={...nf,ordered:patients[idx].feet[fi].ordered};
+      else patients[idx].feet.push(nf);
+    });
+  } else {
+    patients.push({...data,id:Date.now()});
+  }
+  save();
+  document.getElementById('pt-count').textContent=patients.length;
+  document.getElementById('result-area').innerHTML='<div class="info-box">✓ Пацієнта збережено! Перейдіть на вкладку "Пацієнти".</div>';
+}
+
+function toggleOrdered(pid,side){
+  const p=patients.find(x=>x.id===pid);
+  if(!p)return;
+  const f=p.feet.find(f=>f.side===side);
+  if(f)f.ordered=!f.ordered;
+  save();renderTable();
+}
+
+function deletePatient(pid){
+  if(!confirm('Видалити пацієнта?'))return;
+  patients=patients.filter(p=>p.id!==pid);
+  save();
+  document.getElementById('pt-count').textContent=patients.length;
+  renderTable();
+}
+
+function renderTable(){
+  document.getElementById('pt-count').textContent=patients.length;
+  if(!patients.length){
+    document.getElementById('pt-table-wrap').innerHTML='<div style="color:var(--text2);font-size:14px;text-align:center;padding:40px">Ще немає пацієнтів.</div>';
+    return;
+  }
+  let rows=patients.map(p=>{
+    const feet=p.feet.map(f=>'<div style="margin-bottom:8px"><span class="mono">'+f.pn+'</span> <span style="font-size:11px;color:var(--text2)">· '+f.name+' · '+(f.side==='R'?'Права':'Ліва')+'</span><br>'+
+      '<span class="'+(f.ordered?'badge-ordered':'badge-pending')+'" onclick="toggleOrdered('+p.id+',\''+f.side+'\')">'+(f.ordered?'✓ Замовлено':'✗ Не замовлено')+'</span></div>').join('');
+    return'<tr><td style="font-weight:500;white-space:nowrap">'+p.last+'<br><span style="font-weight:400">'+p.first+'</span></td>'+
+      '<td style="font-size:12px;color:var(--text2);white-space:nowrap">'+p.weight+' кг<br>'+(p.amp==='bilateral'?'Двобічна':'Однобічна')+'</td>'+
+      '<td>'+feet+'</td>'+
+      '<td><button class="del-btn" onclick="deletePatient('+p.id+')" title="Видалити пацієнта">✕</button></td></tr>';
+  }).join('');
+  document.getElementById('pt-table-wrap').innerHTML='<table><thead><tr><th>Пацієнт</th><th>Вага / Тип</th><th>Стопи та статус замовлення</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(patients,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='patients_prosth.json';a.click();
+}
+
+document.getElementById('pt-count').textContent=patients.length;
+</script>
+</body>
+</html>
